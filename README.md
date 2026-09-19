@@ -1,11 +1,11 @@
 # vox_bridge
 
 A shared personal voice toolkit providing TTS (text → speech) and STT
-(speech → text) to multiple independent use cases — podcast generation,
-the `loremaster` Discord bot, and Home Assistant — without each use case
-reimplementing its own integration.
-
-This replaces the standalone `podcast_generator` repo (`tts_podcast.py`).
+(speech → text) to multiple independent use cases, without each one
+reimplementing its own integration. This repo is a pure library — it has
+no application/CLI code of its own; everything that actually *does*
+something with voice lives in a separate consumer repo that depends on
+this one.
 
 ## Architecture: Ports and Adapters
 
@@ -19,12 +19,26 @@ STTEngine.transcribe(audio) -> text
 ```
 
 - **`KokoroDirectTTS`** — in-process Kokoro call, model loaded once,
-  resident in memory. Chosen approach for all current use cases
-  (podcast generation, loremaster, Home Assistant), favoring simplicity
-  and lower latency over sharing one server across processes.
+  resident in memory. Chosen approach for all current use cases,
+  favoring simplicity and lower latency over sharing one server across
+  processes.
 - **`WyomingWhisperSTT`** — network client to an existing, already-running
   `wyoming-faster-whisper` server (the same one Home Assistant's voice
-  pipeline uses). Not built in phase 1 — see Build Priorities below.
+  pipeline uses). Not built yet — see Status below.
+
+## Consumers
+
+Each of these is its own repo, checked out as a sibling of this one, and
+depends on `vox_bridge` via `pip install -e ../vox_bridge`:
+
+- **`podcast_generator`** — CLI (and, soon, scheduled-task "drop folder")
+  podcast script → audio conversion. The original app this toolkit's TTS
+  side was extracted from.
+- **`loremaster`** — Discord game-assistant bot; a `voice on`/`voice off`
+  mention toggle speaks replies aloud via `KokoroDirectTTS`.
+- **Home Assistant integration** — not started. Motivates the
+  `WyomingWhisperSTT` adapter specifically (Home Assistant already runs a
+  `wyoming-faster-whisper` server as part of its own voice pipeline).
 
 ## Repo Structure
 
@@ -39,54 +53,22 @@ vox_bridge/
 │   └── tts/
 │       ├── base.py              — TTSEngine interface
 │       └── kokoro_direct.py     — KokoroDirectTTS adapter
-├── apps/
-│   └── podcast/
-│       ├── generator.py         — podcast-specific logic (markdown
-│       │                          stripping, batch processing, file I/O)
-│       ├── inputs/              — .md scripts go here
-│       └── outputs/             — generated audio lands here
 └── hf_cache/                    — gitignored; local HF cache for offline Kokoro
 ```
 
-(`vox_bridge/stt/` — `base.py` and `wyoming_whisper.py` — doesn't exist yet;
-it's phase 3+, see below.)
+(`vox_bridge/stt/` — `base.py` and `wyoming_whisper.py` — doesn't exist yet.)
 
 ## Status
 
-- **Phase 1 (podcast generation): done.** See Usage below.
-- **Phase 2 (loremaster voice output): done**, in the sibling `loremaster`
-  repo (`bot/main.py`) — added a `voice on`/`voice off` mention toggle that
-  joins/leaves the author's current voice channel and speaks replies aloud
-  there via `KokoroDirectTTS`, run off the event loop with
-  `asyncio.to_thread`. `loremaster` depends on this repo via
-  `pip install -e ../vox_bridge` into its bot venv. Requires `ffmpeg` on
-  `PATH` for actual playback — installed on this machine via
-  `winget install --id Gyan.FFmpeg -e` (confirmed on PATH for both the
-  podcast toolchain and loremaster's bot venv). Still not live-tested
-  against a real Discord voice connection.
-- **Phase 3+ (`WyomingWhisperSTT`, Home Assistant, STT of any kind):
-  not started.**
+- **TTS (`KokoroDirectTTS`): done.** Two consumers wired up:
+  - `podcast_generator` (CLI usage — see that repo's README).
+  - `loremaster` (`bot/main.py`'s voice toggle, run off the event loop via
+    `asyncio.to_thread`). Requires `ffmpeg` on `PATH` — installed on this
+    machine via `winget install --id Gyan.FFmpeg -e`. Not yet live-tested
+    against a real Discord voice connection.
+- **STT (`WyomingWhisperSTT`), Home Assistant integration: not started.**
 
-## Usage — podcast generation
-
-```
-pip install -r requirements.txt
-```
-
-Populate `hf_cache/` (see "Offline Hugging Face cache" below), then drop
-`.md` scripts into `apps/podcast/inputs/` and run:
-
-```
-python apps/podcast/generator.py
-python apps/podcast/generator.py --voice af_heart --speed 1.1
-python apps/podcast/generator.py apps/podcast/inputs/my-script.md --format wav --output episode01.wav
-```
-
-A script may set its own voice with a `**Voice:**` line in its header; see
-`apps/podcast/generator.py`'s module docstring for full CLI details and
-voice precedence rules.
-
-### Offline Hugging Face cache (only needed on a firewalled machine)
+## Offline Hugging Face cache (only needed on a firewalled machine)
 
 `KokoroDirectTTS` always routes the Hugging Face cache to a repo-relative
 `hf_cache/` (`HF_HOME`), which is harmless and useful everywhere — it keeps
@@ -120,99 +102,29 @@ running this once somewhere unrestricted first):
 python -m spacy download en_core_web_sm
 ```
 
-## Build Priorities
+## History
 
-**Phase 1 (done): port podcast generation, and only that.**
+This toolkit started as a straight extraction from `podcast_generator`'s
+`tts_podcast.py`: the Kokoro-specific calls became `KokoroDirectTTS`
+(implementing the new `TTSEngine` interface) behind this repo's
+`vox_bridge/tts/`, while podcast-specific logic (markdown stripping, batch
+processing, voice metadata) briefly lived here too, in an `apps/podcast/`
+folder, before being moved back out into `podcast_generator`'s own repo as
+that app's `generator.py` — restoring the same "toolkit + independent
+consumer repos" shape used for `loremaster` and (eventually) Home
+Assistant. `loremaster` then became the second consumer, adding a
+`voice on`/`voice off` mention toggle on top of the same `KokoroDirectTTS`
+adapter — no new synthesis code, just a new caller.
 
-Take the existing, working logic from `tts_podcast.py` (from the
-`podcast_generator` repo) and split it across the new structure:
-
-- Everything that talks to Kokoro directly (`build_pipeline`,
-  `get_pipeline`, `synthesize`) → becomes `KokoroDirectTTS` in
-  `vox_bridge/tts/kokoro_direct.py`, implementing the `TTSEngine`
-  interface (`synthesize(text, voice) -> audio`). This is the reusable
-  part other consumers (loremaster, HA) will import later.
-- Everything specific to *podcasts* (markdown stripping, batch mode over
-  `inputs/`, file naming, voice-metadata parsing from a script's header,
-  MP3/WAV writing) → stays in `apps/podcast/generator.py`, which imports
-  and calls `KokoroDirectTTS`, but doesn't know anything about Kokoro
-  internals directly.
-- End result should behave identically to the current tool from the
-  user's perspective: drop `.md` scripts in `apps/podcast/inputs/`, run
-  one command, get audio in `apps/podcast/outputs/`. Command-line
-  interface, batch/single-file modes, per-script `**Voice:**` metadata,
-  and `--voice`/`--speed`/`--format`/`--output` flags should all be
-  preserved exactly as they work today.
-- **Also fix the offline/firewall issue while porting.** The Kokoro
-  model must be able to load from a local, repo-relative Hugging Face
-  cache instead of always reaching out to huggingface.co. The user will
-  populate `hf_cache/` manually (copying it from a machine where the
-  initial download isn't firewalled) — don't try to trigger a live
-  download as part of this build.
-
-  (Revised after the initial build: this only needs to *force* offline
-  mode — `HF_HUB_OFFLINE=1` — on the specific machine that's actually
-  firewalled. The original version of this fix set that unconditionally
-  via `os.environ.setdefault`, which turned out to also silently block
-  normal downloads on a machine with real internet access. See "Offline
-  Hugging Face cache" above for the corrected, opt-in behavior.)
-
-**Explicitly out of scope for phase 1** (deferred, do not build yet):
-
-- `WyomingWhisperSTT` / any STT capability at all
-- Any loremaster or Home Assistant integration
-- Any script-drop-folder or email-based input pipeline (future
-  exploration, not yet designed in detail)
-- A shared/Wyoming-mediated TTS server mode (current decision is
-  direct-call only; revisit only if resource use becomes a real problem)
-
-**Phase 2 (done): TTS for loremaster.**
-
-Once `KokoroDirectTTS` exists and podcast generation runs through it
-cleanly, give the `loremaster` Discord bot voice output as a second
-consumer of the same adapter — no new synthesis code, just a new caller.
-
-- `loremaster` imports `KokoroDirectTTS` from `vox_bridge` the same way
-  `apps/podcast/generator.py` does.
-- New, loremaster-specific work (does not belong in `vox_bridge` itself):
-  - Getting synthesized audio *into* a Discord voice channel (discord.py's
-    voice client, `PyNaCl` + `ffmpeg`) — this is Discord-specific plumbing,
-    not a toolkit concern.
-  - A per-server or per-user `/loremaster voice on|off` toggle. Text
-    response always posts regardless of the toggle; voice is an optional
-    layer on top when enabled.
-- Voice *input* for loremaster remains explicitly out of scope (see
-  Migration Notes — the earlier bug was almost certainly `discord.py`'s
-  immature voice-receive support, not the STT engine choice; if revisited
-  later, evaluate `py-cord` first, and route transcription through
-  `WyomingWhisperSTT` once that adapter exists in phase 3+, rather than
-  writing bespoke STT code in the loremaster repo).
-
-**Phase 3+ (not yet scheduled):** `WyomingWhisperSTT`, Home Assistant
-integration, any script-drop-folder or email-based pipeline.
-
-## Migration Notes
-
-- Carry over `requirements.txt` as-is (`kokoro`, `soundfile`, `torch`,
-  `numpy`) — no new dependencies needed for phase 1.
-- Preserve the Windows/conda OpenMP workaround
-  (`KMP_DUPLICATE_LIB_OK`) and the torch-imported-before-kokoro ordering
-  — both are load-bearing for existing users on Windows/conda.
-- Preserve the existing markdown-stripping rules (headers, `**Key:**`
-  metadata lines, horizontal rules, italic-only production notes,
-  inline formatting) exactly — this logic is podcast-specific and moves
-  to `apps/podcast/generator.py` unchanged in behavior.
+Along the way: the original offline-Kokoro fix forced `HF_HUB_OFFLINE=1`
+unconditionally, which turned out to silently block normal downloads on a
+machine with real internet access (this one) — see "Offline Hugging Face
+cache" above for the corrected, opt-in version.
 
 ## Next Step
-
-Phases 1 and 2 are built (see Status above). Remaining known follow-ups:
 
 - Live-test loremaster's voice toggle against a real Discord voice channel
   (`ffmpeg` is installed and on PATH now, so the remaining gap is just
   actually trying it).
-- On this machine, any voice not yet cached downloads on demand now — no
-  action needed. On a firewalled machine, populate `hf_cache/` with
-  whichever voices get used beyond the two (`af_heart`, `am_echo`)
-  currently bundled, and set `HF_HUB_OFFLINE=1` there.
-- Phase 3+ (`WyomingWhisperSTT`, Home Assistant integration, STT of any
-  kind) is not yet scheduled or designed in detail.
+- `WyomingWhisperSTT` and Home Assistant integration are not yet scheduled
+  or designed in detail.

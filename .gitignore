@@ -1,13 +1,6 @@
 # Local, repo-relative Hugging Face cache for offline Kokoro model loading.
 hf_cache/
 
-# Generated audio output
-apps/podcast/outputs/*.mp3
-apps/podcast/outputs/*.wav
-
-# Podcast scripts are personal/private drafts, not toolkit code.
-apps/podcast/inputs/*.md
-
 # Python
 __pycache__/
 *.py[cod]
