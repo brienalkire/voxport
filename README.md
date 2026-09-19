@@ -60,7 +60,10 @@ it's phase 3+, see below.)
   there via `KokoroDirectTTS`, run off the event loop with
   `asyncio.to_thread`. `loremaster` depends on this repo via
   `pip install -e ../vox_bridge` into its bot venv. Requires `ffmpeg` on
-  `PATH` for actual playback — not yet installed on this machine.
+  `PATH` for actual playback — installed on this machine via
+  `winget install --id Gyan.FFmpeg -e` (confirmed on PATH for both the
+  podcast toolchain and loremaster's bot venv). Still not live-tested
+  against a real Discord voice connection.
 - **Phase 3+ (`WyomingWhisperSTT`, Home Assistant, STT of any kind):
   not started.**
 
@@ -204,8 +207,12 @@ integration, any script-drop-folder or email-based pipeline.
 
 Phases 1 and 2 are built (see Status above). Remaining known follow-ups:
 
-- Install `ffmpeg` on PATH so loremaster's voice playback actually works.
-- Populate `hf_cache/` with whichever voices get used beyond the two
-  (`af_heart`, `am_echo`) currently cached.
+- Live-test loremaster's voice toggle against a real Discord voice channel
+  (`ffmpeg` is installed and on PATH now, so the remaining gap is just
+  actually trying it).
+- On this machine, any voice not yet cached downloads on demand now — no
+  action needed. On a firewalled machine, populate `hf_cache/` with
+  whichever voices get used beyond the two (`af_heart`, `am_echo`)
+  currently bundled, and set `HF_HUB_OFFLINE=1` there.
 - Phase 3+ (`WyomingWhisperSTT`, Home Assistant integration, STT of any
   kind) is not yet scheduled or designed in detail.
