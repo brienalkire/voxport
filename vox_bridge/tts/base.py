@@ -19,5 +19,9 @@ class TTSEngine(ABC):
         """Return synthesized audio for `text` spoken in `voice`.
 
         Returns a 1-D numpy array of audio samples at `self.sample_rate`.
+        A concrete adapter may accept additional, engine-specific keyword
+        arguments beyond this minimal signature (e.g. `KokoroDirectTTS`
+        accepts an optional `lang_code` override) — callers that don't need
+        them can ignore this possibility entirely.
         """
         raise NotImplementedError

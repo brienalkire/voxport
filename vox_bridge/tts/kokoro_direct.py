@@ -77,7 +77,7 @@ class KokoroDirectTTS(TTSEngine):
             self._pipelines[lang_code] = self._build_pipeline(lang_code)
         return self._pipelines[lang_code]
 
-    def synthesize(self, text: str, voice: str, speed: float = 1.0, lang_code: str = None):
+    def synthesize(self, text: str, voice: str, speed: float = 1.0, lang_code: str | None = None):
         """Return synthesized audio for `text` as a single numpy array.
 
         The accent/language pipeline is derived from the voice's first
@@ -96,7 +96,7 @@ class KokoroDirectTTS(TTSEngine):
 
         segments = []
         generator = pipeline(text, voice=voice, speed=speed)
-        for index, (graphemes, phonemes, audio) in enumerate(generator, start=1):
+        for index, (_graphemes, _phonemes, audio) in enumerate(generator, start=1):
             print(f"  Segment {index}...")
             # `audio` may be a torch tensor or a numpy array; normalize to numpy.
             if hasattr(audio, "detach"):

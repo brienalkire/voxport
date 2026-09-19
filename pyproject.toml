@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "vox_bridge"
 version = "0.1.0"
 description = "Shared personal voice toolkit: TTS/STT ports and adapters."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "kokoro>=0.9.4",

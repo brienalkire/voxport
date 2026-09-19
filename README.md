@@ -31,9 +31,9 @@ STTEngine.transcribe(audio) -> text
 Each of these is its own repo, checked out as a sibling of this one, and
 depends on `vox_bridge` via `pip install -e ../vox_bridge`:
 
-- **`podcast_generator`** — CLI (and, soon, scheduled-task "drop folder")
-  podcast script → audio conversion. The original app this toolkit's TTS
-  side was extracted from.
+- **`podcast_generator`** — CLI and scheduled-task "drop folder" podcast
+  script → audio conversion. The original app this toolkit's TTS side was
+  extracted from.
 - **`loremaster`** — Discord game-assistant bot; a `voice on`/`voice off`
   mention toggle speaks replies aloud via `KokoroDirectTTS`.
 - **Home Assistant integration** — not started. Motivates the
@@ -45,9 +45,10 @@ depends on `vox_bridge` via `pip install -e ../vox_bridge`:
 ```
 vox_bridge/
 ├── README.md
-├── requirements.txt
+├── LICENSE
 ├── pyproject.toml               — makes `vox_bridge` pip-installable
-│                                  (editable) for out-of-repo consumers
+│                                  (editable) for out-of-repo consumers;
+│                                  also the single source of dependencies
 ├── .gitignore                  — excludes hf_cache/, __pycache__, etc.
 ├── vox_bridge/                  — the shared, importable toolkit
 │   └── tts/
@@ -60,12 +61,11 @@ vox_bridge/
 
 ## Status
 
-- **TTS (`KokoroDirectTTS`): done.** Two consumers wired up:
-  - `podcast_generator` (CLI usage — see that repo's README).
-  - `loremaster` (`bot/main.py`'s voice toggle, run off the event loop via
-    `asyncio.to_thread`). Requires `ffmpeg` on `PATH` — installed on this
-    machine via `winget install --id Gyan.FFmpeg -e`. Not yet live-tested
-    against a real Discord voice connection.
+- **TTS (`KokoroDirectTTS`): built and in use** by two consumers:
+  - `podcast_generator` — CLI usage, see that repo's README.
+  - `loremaster` — a Discord bot's `voice on`/`voice off` toggle, run off
+    the event loop via `asyncio.to_thread`. Voice playback additionally
+    requires `ffmpeg` on `PATH` (not installed by this repo).
 - **STT (`WyomingWhisperSTT`), Home Assistant integration: not started.**
 
 ## Offline Hugging Face cache (only needed on a firewalled machine)
@@ -121,10 +121,11 @@ unconditionally, which turned out to silently block normal downloads on a
 machine with real internet access (this one) — see "Offline Hugging Face
 cache" above for the corrected, opt-in version.
 
-## Next Step
+## Roadmap
 
-- Live-test loremaster's voice toggle against a real Discord voice channel
-  (`ffmpeg` is installed and on PATH now, so the remaining gap is just
-  actually trying it).
-- `WyomingWhisperSTT` and Home Assistant integration are not yet scheduled
-  or designed in detail.
+`WyomingWhisperSTT` and a Home Assistant integration are the next planned
+consumer/adapter pair, but neither is scheduled or designed in detail yet.
+
+## License
+
+[MIT](LICENSE)
