@@ -4,6 +4,40 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-09-19
+
+Adds the STT side of the toolkit: an `STTEngine` port and one working
+adapter, `WyomingWhisperSTT`. Library-only — no consumer wiring yet (see
+Notes).
+
+### Added
+- `STTEngine` interface (`vox_bridge/stt/base.py`), mirroring `TTSEngine`:
+  `transcribe(audio) -> str`.
+- `WyomingWhisperSTT` (`vox_bridge/stt/wyoming_whisper.py`) — a network
+  client to a running [Wyoming](https://github.com/OHF-Voice/wyoming)
+  protocol Whisper server (e.g. `rhasspy/wyoming-whisper`), the same kind
+  of server Home Assistant's own voice pipeline talks to. Unlike
+  `KokoroDirectTTS`, this adapter does no local model loading — all
+  transcription happens server-side. Host/port are configurable
+  (`localhost:10300` default), not hardcoded, since this will eventually
+  point at dedicated hardware rather than a local test container.
+- `wyoming` added as a dependency (`pyproject.toml`).
+
+### Verified
+- A local `rhasspy/wyoming-whisper` Docker container (`tiny-int8` model),
+  tested via a round trip through this repo's own `KokoroDirectTTS`:
+  synthesized a known phrase, resampled 24kHz → 16kHz, transcribed it back
+  through `WyomingWhisperSTT`, and confirmed the text matched.
+
+### Notes
+- Corrects a wrong image name in the build guidance this was implemented
+  from (`rhasspy/wyoming-faster-whisper`, which doesn't exist) — the real
+  image is `rhasspy/wyoming-whisper`.
+- Deliberately out of scope for this release: any loremaster wiring, any
+  Home Assistant integration, and any decision about voice input UX
+  anywhere. This release only proves the vox_bridge-side adapter works
+  against a real server.
+
 ## [0.1.0] - 2026-09-19
 
 Initial release: a `TTSEngine` port/adapter toolkit with one working
@@ -30,4 +64,5 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
+[0.2.0]: https://github.com/brienalkire/vox_bridge/releases/tag/v0.2.0
 [0.1.0]: https://github.com/brienalkire/vox_bridge/releases/tag/v0.1.0

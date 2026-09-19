@@ -23,8 +23,9 @@ STTEngine.transcribe(audio) -> text
   favoring simplicity and lower latency over sharing one server across
   processes.
 - **`WyomingWhisperSTT`** — network client to an existing, already-running
-  `wyoming-faster-whisper` server (the same one Home Assistant's voice
-  pipeline uses). Not built yet — see Status below.
+  Wyoming-protocol Whisper server (e.g. `rhasspy/wyoming-whisper` — the
+  same kind of server Home Assistant's voice pipeline uses). No model
+  loading here; all transcription happens server-side.
 
 ## Consumers
 
@@ -36,9 +37,12 @@ depends on `vox_bridge` via `pip install -e ../vox_bridge`:
   extracted from.
 - **`loremaster`** — Discord game-assistant bot; a `voice on`/`voice off`
   mention toggle speaks replies aloud via `KokoroDirectTTS`.
+- **`loremaster` voice input** — not started. `WyomingWhisperSTT` exists,
+  but wiring it into loremaster (and the discord.py voice-receive question
+  that comes with it) is an explicit separate decision — see History.
 - **Home Assistant integration** — not started. Motivates the
   `WyomingWhisperSTT` adapter specifically (Home Assistant already runs a
-  `wyoming-faster-whisper` server as part of its own voice pipeline).
+  Wyoming Whisper server as part of its own voice pipeline).
 
 ## Repo Structure
 
@@ -51,13 +55,14 @@ vox_bridge/
 │                                  also the single source of dependencies
 ├── .gitignore                  — excludes hf_cache/, __pycache__, etc.
 ├── vox_bridge/                  — the shared, importable toolkit
-│   └── tts/
-│       ├── base.py              — TTSEngine interface
-│       └── kokoro_direct.py     — KokoroDirectTTS adapter
+│   ├── tts/
+│   │   ├── base.py              — TTSEngine interface
+│   │   └── kokoro_direct.py     — KokoroDirectTTS adapter
+│   └── stt/
+│       ├── base.py              — STTEngine interface
+│       └── wyoming_whisper.py   — WyomingWhisperSTT adapter
 └── hf_cache/                    — gitignored; local HF cache for offline Kokoro
 ```
-
-(`vox_bridge/stt/` — `base.py` and `wyoming_whisper.py` — doesn't exist yet.)
 
 ## Status
 
@@ -66,7 +71,12 @@ vox_bridge/
   - `loremaster` — a Discord bot's `voice on`/`voice off` toggle, run off
     the event loop via `asyncio.to_thread`. Voice playback additionally
     requires `ffmpeg` on `PATH` (not installed by this repo).
-- **STT (`WyomingWhisperSTT`), Home Assistant integration: not started.**
+- **STT (`WyomingWhisperSTT`): built, not wired into any consumer yet.**
+  Verified against a real local Wyoming Whisper server (see "Running a
+  Wyoming Whisper server" below) — synthesized a phrase with
+  `KokoroDirectTTS`, resampled it, and transcribed it back correctly
+  through this adapter. No consumer (loremaster, Home Assistant) uses it
+  yet; that's a deliberately separate decision.
 
 ## Offline Hugging Face cache (only needed on a firewalled machine)
 
@@ -102,6 +112,29 @@ running this once somewhere unrestricted first):
 python -m spacy download en_core_web_sm
 ```
 
+## Running a Wyoming Whisper server (for testing)
+
+`WyomingWhisperSTT` is a network client — it needs something to talk to.
+For local testing, run [`rhasspy/wyoming-whisper`](https://github.com/rhasspy/wyoming-faster-whisper)
+in Docker (Docker Desktop must actually be running first — check with
+`docker info`, not just `docker --version`):
+
+```
+docker run -d --name whisper --restart unless-stopped -p 10300:10300 -v C:\wyoming-data:/data rhasspy/wyoming-whisper --model tiny-int8 --language en
+```
+
+**The image is `rhasspy/wyoming-whisper`, not `wyoming-faster-whisper`**
+(that name doesn't exist on Docker Hub — easy mistake since it matches
+the GitHub repo name) — confirmed against the project's own README.
+`docker logs whisper` should show `Ready` once the model's loaded;
+`docker ps` should show it `healthy`. `tiny-int8` is small/fast/low-
+accuracy, fine for proving the plumbing works — swap to a larger model
+only once transcription quality actually matters for a real use case.
+
+`WyomingWhisperSTT(host="localhost", port=10300)` are the defaults;
+override both when pointing at different hardware later (a dedicated
+always-on machine, rather than a local container).
+
 ## History
 
 This toolkit started as a straight extraction from `podcast_generator`'s
@@ -121,10 +154,26 @@ unconditionally, which turned out to silently block normal downloads on a
 machine with real internet access (this one) — see "Offline Hugging Face
 cache" above for the corrected, opt-in version.
 
+`STTEngine` and `WyomingWhisperSTT` were added deliberately scoped to this
+repo only — no loremaster changes, no Home Assistant integration, no
+decision about voice-input UX anywhere. That's intentional: loremaster
+voice *input* (as opposed to the voice *output* it already has) needs its
+own design pass, since discord.py has historically lacked real voice-
+receive support (an earlier loremaster attempt hit exactly this, per
+project notes — `py-cord`, a discord.py fork, is the suggested thing to
+evaluate if that's revisited).
+
 ## Roadmap
 
-`WyomingWhisperSTT` and a Home Assistant integration are the next planned
-consumer/adapter pair, but neither is scheduled or designed in detail yet.
+- Wiring `WyomingWhisperSTT` into a consumer — loremaster voice input or
+  Home Assistant — isn't scheduled or designed in detail yet. Both are
+  real open questions, not just "connect the adapter": loremaster's
+  depends on discord.py/py-cord's voice-receive capabilities, and Home
+  Assistant's depends on where the always-on Wyoming server actually ends
+  up living.
+- The local Docker test container is exactly that — a test fixture. It's
+  not meant to be the permanent server; a dedicated always-on machine is
+  the eventual target, whenever that exists.
 
 ## License
 
