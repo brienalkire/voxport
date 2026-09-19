@@ -83,30 +83,39 @@ A script may set its own voice with a `**Voice:**` line in its header; see
 `apps/podcast/generator.py`'s module docstring for full CLI details and
 voice precedence rules.
 
-### Offline Hugging Face cache
+### Offline Hugging Face cache (only needed on a firewalled machine)
 
-`KokoroDirectTTS` loads the model from a repo-relative `hf_cache/`
-(`HF_HOME`) with `HF_HUB_OFFLINE=1`, so it never reaches out to
-huggingface.co. Populate it by copying an existing cache from a machine
-where the initial download isn't firewalled — the directory layout is
-Hugging Face's standard `hub/models--<org>--<name>/...` cache structure.
-**Only voices whose `.pt` file is present in that cache will work offline**
-— `--voice` (or a script's `**Voice:**` line) naming an uncached voice will
-fail with a Hub connection error instead of a live download.
+`KokoroDirectTTS` always routes the Hugging Face cache to a repo-relative
+`hf_cache/` (`HF_HOME`), which is harmless and useful everywhere — it keeps
+a machine's downloaded weights bundled with the repo instead of scattered
+in the user-global cache. **Offline mode itself is opt-in, not forced**:
+`kokoro_direct.py` never sets `HF_HUB_OFFLINE` — on a machine with normal
+internet access, an uncached voice just downloads into `hf_cache/` on first
+use, same as vanilla Hugging Face behavior.
 
-**A second, separate network dependency `HF_HUB_OFFLINE` does *not* cover:**
-Kokoro's English phonemizer (via `misaki`) pulls in spaCy's `en_core_web_sm`
-model on first use, downloaded from a GitHub release URL, not from Hugging
-Face — so it's untouched by the `HF_HOME`/`HF_HUB_OFFLINE` fix and will
+If you're on a machine where huggingface.co is actually firewalled (this
+is why the fix exists — one of Brien's two machines, not necessarily this
+one), set `HF_HUB_OFFLINE=1` yourself in that machine's own shell profile
+or a `.env` you source before running — vox_bridge honors it if already
+set, it just won't set it for you. Then populate `hf_cache/` by copying an
+existing cache from a machine where the initial download wasn't blocked
+(Hugging Face's standard `hub/models--<org>--<name>/...` layout). With
+`HF_HUB_OFFLINE=1` set, **only voices whose `.pt` file is present in that
+cache will work** — an uncached voice fails with a Hub connection error
+instead of a live download.
+
+**A second, separate network dependency this does *not* cover, on either
+machine:** Kokoro's English phonemizer (via `misaki`) pulls in spaCy's
+`en_core_web_sm` model on first use, downloaded from a GitHub release URL,
+not from Hugging Face — so `HF_HUB_OFFLINE` doesn't touch it, and it will
 still try to reach the network on a machine that has never run it before.
 It only downloads once per Python environment (cached in `site-packages`
-after that), so this only bites a *fresh* venv on a firewalled machine.
-Install it ahead of time, while online, with:
+after that), so this only bites a *fresh* venv on the firewalled machine.
+Install it ahead of time there, while online (e.g. by copying the venv, or
+running this once somewhere unrestricted first):
 ```
 python -m spacy download en_core_web_sm
 ```
-before relying on `apps/podcast/generator.py` (or anything importing
-`KokoroDirectTTS`) to run fully offline in a new environment.
 
 ## Build Priorities
 
@@ -132,17 +141,18 @@ Take the existing, working logic from `tts_podcast.py` (from the
   and `--voice`/`--speed`/`--format`/`--output` flags should all be
   preserved exactly as they work today.
 - **Also fix the offline/firewall issue while porting.** The Kokoro
-  model must load from a local, repo-relative Hugging Face cache rather
-  than reaching out to huggingface.co every run. Set both of these
-  early in the module, before any Kokoro-related import, consistent
-  with the existing `KMP_DUPLICATE_LIB_OK` pattern already in the script:
-  ```python
-  os.environ.setdefault("HF_HOME", os.path.join(SCRIPT_DIR, "hf_cache"))
-  os.environ.setdefault("HF_HUB_OFFLINE", "1")
-  ```
-  The user will populate `hf_cache/` manually (copying it from a machine
-  where the initial download isn't firewalled) — don't try to trigger a
-  live download as part of this build.
+  model must be able to load from a local, repo-relative Hugging Face
+  cache instead of always reaching out to huggingface.co. The user will
+  populate `hf_cache/` manually (copying it from a machine where the
+  initial download isn't firewalled) — don't try to trigger a live
+  download as part of this build.
+
+  (Revised after the initial build: this only needs to *force* offline
+  mode — `HF_HUB_OFFLINE=1` — on the specific machine that's actually
+  firewalled. The original version of this fix set that unconditionally
+  via `os.environ.setdefault`, which turned out to also silently block
+  normal downloads on a machine with real internet access. See "Offline
+  Hugging Face cache" above for the corrected, opt-in behavior.)
 
 **Explicitly out of scope for phase 1** (deferred, do not build yet):
 

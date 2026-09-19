@@ -13,11 +13,18 @@ import os
 # vox_bridge/tts/kokoro_direct.py -> vox_bridge/tts -> vox_bridge -> repo root
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# The Kokoro model must load from a local, repo-relative Hugging Face cache
-# rather than reaching out to huggingface.co every run. Set both before any
-# Kokoro-related import.
+# Route the Hugging Face cache to a repo-relative directory rather than the
+# user-global default, so a machine's pre-populated cache travels with the
+# repo and downloads (where allowed) land somewhere predictable. Harmless
+# and useful on any machine, so it's always on. Set before any Kokoro-related
+# import.
 os.environ.setdefault("HF_HOME", os.path.join(REPO_ROOT, "hf_cache"))
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+# Offline mode is opt-in, not forced here: only a machine that actually needs
+# it (e.g. one behind a firewall that blocks huggingface.co) should set
+# HF_HUB_OFFLINE=1 itself, in its own shell/.env — this module never sets it,
+# so a machine with normal internet access can still download any voice not
+# already in the local hf_cache above.
 
 # In conda/miniforge environments, PyTorch's bundled OpenMP runtime (libomp)
 # can collide with Intel's (libiomp5md, pulled in by MKL), causing "OMP Error
