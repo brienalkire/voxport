@@ -27,6 +27,64 @@ STTEngine.transcribe(audio) -> text
   same kind of server Home Assistant's voice pipeline uses). No model
   loading here; all transcription happens server-side.
 
+## Installation
+
+Requires Python 3.10+. Clone this repo as a sibling of the consumer repo,
+then install it in editable mode from the consumer's environment:
+
+```
+pip install -e ../vox_bridge
+```
+
+Dependencies (Kokoro, torch, soundfile, numpy, wyoming) come from
+`pyproject.toml`. To pin a consumer to a tagged release instead of the
+working tree, check out that tag first (e.g. `git checkout v0.2.0`).
+
+Not installed by this repo:
+- `WyomingWhisperSTT` needs a running Wyoming Whisper server — see
+  "Running a Wyoming Whisper server" below.
+- Kokoro's first run downloads model weights and spaCy's `en_core_web_sm`
+  — see "Offline Hugging Face cache" below if that machine is firewalled.
+
+## Usage
+
+### Text → speech
+
+```python
+import soundfile as sf
+from vox_bridge.tts.kokoro_direct import KokoroDirectTTS
+
+tts = KokoroDirectTTS()  # reuse one instance; models load once per accent
+audio = tts.synthesize("Hello from vox_bridge.", voice="af_heart", speed=1.0)
+sf.write("hello.wav", audio, tts.sample_rate)  # 24 kHz mono
+```
+
+The voice name's first letter picks the accent (`a` American, `b` British,
+...), following Kokoro's naming; pass `lang_code=` to override.
+
+### Speech → text
+
+```python
+from vox_bridge.stt.wyoming_whisper import WyomingWhisperSTT
+
+stt = WyomingWhisperSTT(host="localhost", port=10300)  # the defaults
+text = stt.transcribe(audio_16k, language="en")
+```
+
+`audio_16k` is a 1-D numpy array at `stt.sample_rate` (16 kHz mono),
+either int16 or float in [-1, 1]. Resample first if your source differs
+(Kokoro output is 24 kHz; Discord audio is 48 kHz stereo).
+
+### From async code
+
+Both calls block, and `transcribe()` runs its own event loop internally,
+so call them from a worker thread inside an already-running loop:
+
+```python
+audio = await asyncio.to_thread(tts.synthesize, text, "bm_george")
+text = await asyncio.to_thread(stt.transcribe, audio_16k, "en")
+```
+
 ## Consumers
 
 Each of these is its own repo, checked out as a sibling of this one, and
@@ -35,11 +93,10 @@ depends on `vox_bridge` via `pip install -e ../vox_bridge`:
 - **`podcast_generator`** — CLI and scheduled-task "drop folder" podcast
   script → audio conversion. The original app this toolkit's TTS side was
   extracted from.
-- **`loremaster`** — Discord game-assistant bot; a `voice on`/`voice off`
-  mention toggle speaks replies aloud via `KokoroDirectTTS`.
-- **`loremaster` voice input** — not started. `WyomingWhisperSTT` exists,
-  but wiring it into loremaster (and the discord.py voice-receive question
-  that comes with it) is an explicit separate decision — see History.
+- **`loremaster`** — Discord game-assistant bot. Speaks replies aloud via
+  `KokoroDirectTTS`, and listens for wake-word voice questions in a voice
+  channel via `WyomingWhisperSTT` (py-cord voice receive plus webrtcvad
+  utterance detection, all on loremaster's side).
 - **Home Assistant integration** — not started. Motivates the
   `WyomingWhisperSTT` adapter specifically (Home Assistant already runs a
   Wyoming Whisper server as part of its own voice pipeline).
@@ -50,6 +107,10 @@ depends on `vox_bridge` via `pip install -e ../vox_bridge`:
 vox_bridge/
 ├── README.md
 ├── LICENSE
+├── CHANGELOG.md                — per-release notes (also the GitHub
+│                                  release notes)
+├── stt_guidance.md             — build guidance the STT side was
+│                                  implemented from
 ├── pyproject.toml               — makes `vox_bridge` pip-installable
 │                                  (editable) for out-of-repo consumers;
 │                                  also the single source of dependencies
@@ -71,12 +132,11 @@ vox_bridge/
   - `loremaster` — a Discord bot's `voice on`/`voice off` toggle, run off
     the event loop via `asyncio.to_thread`. Voice playback additionally
     requires `ffmpeg` on `PATH` (not installed by this repo).
-- **STT (`WyomingWhisperSTT`): built, not wired into any consumer yet.**
-  Verified against a real local Wyoming Whisper server (see "Running a
-  Wyoming Whisper server" below) — synthesized a phrase with
-  `KokoroDirectTTS`, resampled it, and transcribed it back correctly
-  through this adapter. No consumer (loremaster, Home Assistant) uses it
-  yet; that's a deliberately separate decision.
+- **STT (`WyomingWhisperSTT`): built and in use** by `loremaster`'s voice
+  input. Originally verified against a real local Wyoming Whisper server
+  (see "Running a Wyoming Whisper server" below) — synthesized a phrase
+  with `KokoroDirectTTS`, resampled it, and transcribed it back correctly
+  through this adapter. Home Assistant doesn't use it yet.
 
 ## Offline Hugging Face cache (only needed on a firewalled machine)
 
@@ -161,16 +221,16 @@ voice *input* (as opposed to the voice *output* it already has) needs its
 own design pass, since discord.py has historically lacked real voice-
 receive support (an earlier loremaster attempt hit exactly this, per
 project notes — `py-cord`, a discord.py fork, is the suggested thing to
-evaluate if that's revisited).
+evaluate if that's revisited). That design pass later happened in
+loremaster itself: it moved to a pinned py-cord commit for voice receive
+and now uses `WyomingWhisperSTT` for wake-word voice input — still with no
+loremaster-specific code in this repo.
 
 ## Roadmap
 
-- Wiring `WyomingWhisperSTT` into a consumer — loremaster voice input or
-  Home Assistant — isn't scheduled or designed in detail yet. Both are
-  real open questions, not just "connect the adapter": loremaster's
-  depends on discord.py/py-cord's voice-receive capabilities, and Home
-  Assistant's depends on where the always-on Wyoming server actually ends
-  up living.
+- Home Assistant integration isn't scheduled or designed in detail yet.
+  It depends on where the always-on Wyoming server actually ends up
+  living.
 - The local Docker test container is exactly that — a test fixture. It's
   not meant to be the permanent server; a dedicated always-on machine is
   the eventual target, whenever that exists.
