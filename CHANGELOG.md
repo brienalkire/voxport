@@ -4,6 +4,24 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-31
+
+Renames the project from `vox_bridge` to `voxport`. No functional changes.
+
+### Changed
+- **Breaking:** the package and import name is now `voxport`
+  (`from voxport.tts.kokoro_direct import KokoroDirectTTS`). Consumers
+  must update their imports and reinstall (`pip uninstall vox_bridge`,
+  then `pip install -e ../voxport`).
+- Distribution name in `pyproject.toml` is now `voxport`; the GitHub repo
+  moves to `brienalkire/voxport`.
+
+### Why
+- Preparing for an eventual PyPI release. `vox-bridge` can't be used
+  there: an unrelated `voxbridge` project already exists, and PyPI
+  rejects names that differ only by `-`, `_` or `.`. "port" also matches
+  the toolkit's ports-and-adapters design.
+
 ## [0.2.0] - 2026-09-19
 
 Adds the STT side of the toolkit: an `STTEngine` port and one working
@@ -64,5 +82,6 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
-[0.2.0]: https://github.com/brienalkire/vox_bridge/releases/tag/v0.2.0
-[0.1.0]: https://github.com/brienalkire/vox_bridge/releases/tag/v0.1.0
+[0.3.0]: https://github.com/brienalkire/voxport/releases/tag/v0.3.0
+[0.2.0]: https://github.com/brienalkire/voxport/releases/tag/v0.2.0
+[0.1.0]: https://github.com/brienalkire/voxport/releases/tag/v0.1.0

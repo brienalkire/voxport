@@ -1,4 +1,4 @@
-# vox_bridge
+# voxport
 
 A shared personal voice toolkit providing TTS (text → speech) and STT
 (speech → text) to multiple independent use cases, without each one
@@ -33,7 +33,7 @@ Requires Python 3.10+. Clone this repo as a sibling of the consumer repo,
 then install it in editable mode from the consumer's environment:
 
 ```
-pip install -e ../vox_bridge
+pip install -e ../voxport
 ```
 
 Dependencies (Kokoro, torch, soundfile, numpy, wyoming) come from
@@ -52,10 +52,10 @@ Not installed by this repo:
 
 ```python
 import soundfile as sf
-from vox_bridge.tts.kokoro_direct import KokoroDirectTTS
+from voxport.tts.kokoro_direct import KokoroDirectTTS
 
 tts = KokoroDirectTTS()  # reuse one instance; models load once per accent
-audio = tts.synthesize("Hello from vox_bridge.", voice="af_heart", speed=1.0)
+audio = tts.synthesize("Hello from voxport.", voice="af_heart", speed=1.0)
 sf.write("hello.wav", audio, tts.sample_rate)  # 24 kHz mono
 ```
 
@@ -65,7 +65,7 @@ The voice name's first letter picks the accent (`a` American, `b` British,
 ### Speech → text
 
 ```python
-from vox_bridge.stt.wyoming_whisper import WyomingWhisperSTT
+from voxport.stt.wyoming_whisper import WyomingWhisperSTT
 
 stt = WyomingWhisperSTT(host="localhost", port=10300)  # the defaults
 text = stt.transcribe(audio_16k, language="en")
@@ -88,7 +88,7 @@ text = await asyncio.to_thread(stt.transcribe, audio_16k, "en")
 ## Consumers
 
 Each of these is its own repo, checked out as a sibling of this one, and
-depends on `vox_bridge` via `pip install -e ../vox_bridge`:
+depends on `voxport` via `pip install -e ../voxport`:
 
 - **`podcast_generator`** — CLI and scheduled-task "drop folder" podcast
   script → audio conversion. The original app this toolkit's TTS side was
@@ -104,18 +104,18 @@ depends on `vox_bridge` via `pip install -e ../vox_bridge`:
 ## Repo Structure
 
 ```
-vox_bridge/
+voxport/
 ├── README.md
 ├── LICENSE
 ├── CHANGELOG.md                — per-release notes (also the GitHub
 │                                  release notes)
 ├── stt_guidance.md             — build guidance the STT side was
 │                                  implemented from
-├── pyproject.toml               — makes `vox_bridge` pip-installable
+├── pyproject.toml               — makes `voxport` pip-installable
 │                                  (editable) for out-of-repo consumers;
 │                                  also the single source of dependencies
 ├── .gitignore                  — excludes hf_cache/, __pycache__, etc.
-├── vox_bridge/                  — the shared, importable toolkit
+├── voxport/                     — the shared, importable toolkit
 │   ├── tts/
 │   │   ├── base.py              — TTSEngine interface
 │   │   └── kokoro_direct.py     — KokoroDirectTTS adapter
@@ -151,7 +151,7 @@ use, same as vanilla Hugging Face behavior.
 If you're on a machine where huggingface.co is actually firewalled (this
 is why the fix exists — one of Brien's two machines, not necessarily this
 one), set `HF_HUB_OFFLINE=1` yourself in that machine's own shell profile
-or a `.env` you source before running — vox_bridge honors it if already
+or a `.env` you source before running — voxport honors it if already
 set, it just won't set it for you. Then populate `hf_cache/` by copying an
 existing cache from a machine where the initial download wasn't blocked
 (Hugging Face's standard `hub/models--<org>--<name>/...` layout). With
@@ -200,7 +200,7 @@ always-on machine, rather than a local container).
 This toolkit started as a straight extraction from `podcast_generator`'s
 `tts_podcast.py`: the Kokoro-specific calls became `KokoroDirectTTS`
 (implementing the new `TTSEngine` interface) behind this repo's
-`vox_bridge/tts/`, while podcast-specific logic (markdown stripping, batch
+`voxport/tts/`, while podcast-specific logic (markdown stripping, batch
 processing, voice metadata) briefly lived here too, in an `apps/podcast/`
 folder, before being moved back out into `podcast_generator`'s own repo as
 that app's `generator.py` — restoring the same "toolkit + independent
@@ -225,6 +225,10 @@ evaluate if that's revisited). That design pass later happened in
 loremaster itself: it moved to a pinned py-cord commit for voice receive
 and now uses `WyomingWhisperSTT` for wake-word voice input — still with no
 loremaster-specific code in this repo.
+
+In v0.3.0 the project was renamed from `vox_bridge` to `voxport`, ahead of
+an eventual PyPI release (`vox-bridge` collides with an unrelated
+`voxbridge` package there). Older changelog entries keep the old paths.
 
 ## Roadmap
 

@@ -14,7 +14,7 @@ from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStart, AudioStop
 from wyoming.client import AsyncTcpClient
 
-from vox_bridge.stt.base import STTEngine
+from voxport.stt.base import STTEngine
 
 # Wyoming Whisper servers expect 16-bit mono PCM at 16 kHz.
 SAMPLE_RATE = 16000

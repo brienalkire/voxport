@@ -10,7 +10,7 @@ becomes a real problem.
 
 import os
 
-# vox_bridge/tts/kokoro_direct.py -> vox_bridge/tts -> vox_bridge -> repo root
+# voxport/tts/kokoro_direct.py -> voxport/tts -> voxport -> repo root
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Route the Hugging Face cache to a repo-relative directory rather than the
@@ -41,7 +41,7 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 # is what makes that safe to rely on from any consumer.
 import torch  # noqa: F401
 
-from vox_bridge.tts.base import TTSEngine
+from voxport.tts.base import TTSEngine
 
 # Kokoro produces audio at a fixed 24 kHz sample rate.
 SAMPLE_RATE = 24000
