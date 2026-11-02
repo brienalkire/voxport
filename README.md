@@ -173,8 +173,14 @@ If you already run Home Assistant with its Whisper add-on, you can point
 ```
 git clone https://github.com/brienalkire/voxport.git
 cd voxport
-pip install -e ".[all]"
+pip install -e ".[all]" pytest
+python -m pytest
 ```
+
+The tests need no network, no Whisper server and no Kokoro model:
+`WyomingWhisperSTT` is tested against a fake in-process Wyoming server.
+Installing `.[wyoming]` instead of `.[all]` is enough to run them and
+skips the 2 GB torch download.
 
 ## License
 

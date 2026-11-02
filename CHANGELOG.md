@@ -6,6 +6,13 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Added
+- Tests (`tests/`): the two interfaces, `WyomingWhisperSTT` against a
+  fake in-process Wyoming server, and the missing-extra import errors.
+- GitHub Actions CI: tests on Python 3.10–3.14 (Linux) and 3.12
+  (Windows), a run without extras, and a package build checked with
+  `twine check --strict`.
+
 ### Changed
 - **Breaking:** adapter dependencies are now optional extras, so an
   install only pulls in what it uses. The base install has just the
