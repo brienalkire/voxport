@@ -4,6 +4,23 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- `KokoroDirectTTS` reports progress through `logging` (the
+  `voxport.tts.kokoro_direct` logger) instead of `print()`: model loads
+  and each synthesis at INFO, per-segment progress at DEBUG. Python
+  hides messages below WARNING by default, so these lines no longer
+  appear unless the app enables them, e.g.
+  `logging.getLogger("voxport").setLevel(logging.INFO)` after its own
+  `logging.basicConfig(...)`.
+
+### Added
+- Tests for `KokoroDirectTTS` using stand-in `torch` and `kokoro`
+  modules: segment concatenation, one pipeline per language, the
+  `lang_code` override, logging, and the empty-output error. They run in
+  CI without the 2 GB torch download.
+
 ## [0.4.0] - 2026-11-01
 
 First public release, and the first on PyPI (`pip install voxport`).

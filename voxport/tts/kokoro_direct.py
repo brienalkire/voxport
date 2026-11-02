@@ -8,7 +8,14 @@ Assistant); revisit only if resource use across multiple resident processes
 becomes a real problem.
 """
 
+import logging
 import os
+
+# Progress messages go through logging, so the calling app decides whether
+# and where they appear: INFO for model loads and each synthesis, DEBUG
+# for per-segment progress. Nothing below WARNING shows unless the app
+# configures logging.
+_log = logging.getLogger(__name__)
 
 # Kokoro and torch are optional dependencies (the `kokoro` extra), so a
 # missing one gets an install hint rather than a bare ModuleNotFoundError.
@@ -90,7 +97,7 @@ class KokoroDirectTTS(TTSEngine):
 
     def _get_pipeline(self, lang_code):
         if lang_code not in self._pipelines:
-            print(f"Loading Kokoro model for language '{lang_code}'...")
+            _log.info("Loading Kokoro model for language '%s'...", lang_code)
             self._pipelines[lang_code] = self._build_pipeline(lang_code)
         return self._pipelines[lang_code]
 
@@ -109,12 +116,12 @@ class KokoroDirectTTS(TTSEngine):
 
         pipeline = self._get_pipeline(lang_code or voice[0])
 
-        print(f"Generating audio locally with Kokoro (voice={voice}, speed={speed})...")
+        _log.info("Generating audio locally with Kokoro (voice=%s, speed=%s)...", voice, speed)
 
         segments = []
         generator = pipeline(text, voice=voice, speed=speed)
         for index, (_graphemes, _phonemes, audio) in enumerate(generator, start=1):
-            print(f"  Segment {index}...")
+            _log.debug("Segment %d...", index)
             # `audio` may be a torch tensor or a numpy array; normalize to numpy.
             if hasattr(audio, "detach"):
                 audio = audio.detach().cpu().numpy()

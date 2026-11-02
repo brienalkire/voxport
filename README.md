@@ -97,6 +97,20 @@ audio = await asyncio.to_thread(tts.synthesize, text, "bm_george")
 text = await asyncio.to_thread(stt.transcribe, audio_16k, "en")
 ```
 
+### Logging
+
+voxport reports progress through Python's `logging` module, under the
+`voxport` logger, and never prints. `KokoroDirectTTS` logs model loads
+and each synthesis at INFO and per-segment progress at DEBUG. Python
+hides messages below WARNING by default, so to see them:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.WARNING)            # your app's setup
+logging.getLogger("voxport").setLevel(logging.INFO)   # voxport progress
+```
+
 ## Writing your own adapter
 
 An adapter subclasses `TTSEngine` or `STTEngine`, sets `sample_rate`,
@@ -178,7 +192,8 @@ python -m pytest
 ```
 
 The tests need no network, no Whisper server and no Kokoro model:
-`WyomingWhisperSTT` is tested against a fake in-process Wyoming server.
+`WyomingWhisperSTT` is tested against a fake in-process Wyoming server,
+and `KokoroDirectTTS` against stand-in `torch` and `kokoro` modules.
 Installing `.[wyoming]` instead of `.[all]` is enough to run them and
 skips the 2 GB torch download.
 
