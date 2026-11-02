@@ -4,7 +4,11 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2026-11-01
+
+First public release, and the first on PyPI (`pip install voxport`).
+Adapter dependencies become optional extras, so installs pull in only
+what they use.
 
 ### Added
 - Tests (`tests/`): the two interfaces, `WyomingWhisperSTT` against a
@@ -12,6 +16,11 @@ All notable changes to this project are documented here. Format follows
 - GitHub Actions CI: tests on Python 3.10–3.14 (Linux) and 3.12
   (Windows), a run without extras, and a package build checked with
   `twine check --strict`.
+- A publish workflow: pushing a version tag tests and builds the
+  package, publishes it to PyPI via Trusted Publishing, and creates the
+  GitHub release from this changelog.
+- Package metadata for PyPI: description, author, keywords, classifiers
+  and project links.
 
 ### Changed
 - **Breaking:** adapter dependencies are now optional extras, so an
@@ -31,6 +40,15 @@ All notable changes to this project are documented here. Format follows
   code, which for a regular (non-editable) install meant inside
   `site-packages`. Existing checkouts that already have `hf_cache/` are
   unaffected.
+- README rewritten for a public audience: `pip install` with extras, a
+  "Writing your own adapter" example, step-by-step offline use, and an
+  OS-neutral Docker command for the Whisper server.
+- Building now requires setuptools 77+, the first version that accepts
+  the `license = "MIT"` expression already in `pyproject.toml`.
+
+### Removed
+- `stt_guidance.md`, the task list the STT side was built from. That
+  work is recorded under 0.2.0 below.
 
 ## [0.3.0] - 2026-10-31
 
@@ -110,6 +128,7 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
+[0.4.0]: https://github.com/brienalkire/voxport/releases/tag/v0.4.0
 [0.3.0]: https://github.com/brienalkire/voxport/releases/tag/v0.3.0
 [0.2.0]: https://github.com/brienalkire/voxport/releases/tag/v0.2.0
 [0.1.0]: https://github.com/brienalkire/voxport/releases/tag/v0.1.0
