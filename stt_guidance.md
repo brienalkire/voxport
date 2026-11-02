@@ -1,8 +1,8 @@
-# STT Guidance — vox_bridge Problem 1
-### Standalone build instructions for a Claude Code session. Companion to `vox_bridge_design_spec_v2.md` — read that first for context, but this file is the actual task list.
+# STT Guidance — voxport Problem 1
+### Standalone build instructions for a Claude Code session. Companion to `voxport_design_spec_v2.md` — read that first for context, but this file is the actual task list.
 
 **Scope: this session only.** Build `STTEngine` + `WyomingWhisperSTT` in
-`vox_bridge`, and get a local Wyoming Whisper server running to test
+`voxport`, and get a local Wyoming Whisper server running to test
 against. **Do not touch Loremaster or make any decision about Loremaster
 voice input** — that's a separate, deferred decision (see "Problem 2" in
 the design spec), explicitly out of scope here.
@@ -64,20 +64,20 @@ came up.
 
 ## Step 3 — Build `STTEngine` (the interface)
 
-In `vox_bridge/stt/base.py`, define the abstract interface, matching the
-existing `TTSEngine` pattern already in `vox_bridge/tts/base.py`:
+In `voxport/stt/base.py`, define the abstract interface, matching the
+existing `TTSEngine` pattern already in `voxport/tts/base.py`:
 
 ```python
 STTEngine.transcribe(audio) -> text
 ```
 
 Keep it as minimal and symmetric with `TTSEngine` as the existing
-codebase's style suggests — check `vox_bridge/tts/base.py` for the exact
+codebase's style suggests — check `voxport/tts/base.py` for the exact
 conventions (typing, docstring style, etc.) and mirror them.
 
 ## Step 4 — Build `WyomingWhisperSTT` (the adapter)
 
-In `vox_bridge/stt/wyoming_whisper.py`, implement `STTEngine` as a
+In `voxport/stt/wyoming_whisper.py`, implement `STTEngine` as a
 network client to the Wyoming server from Step 1, using the plain
 `wyoming` Python package (add it to `requirements.txt`). This is a
 network client only — no model loading, no local Whisper install, all
@@ -101,6 +101,6 @@ before calling this done.
 - Upgrading the Whisper model size
 - Moving the Docker container to different/dedicated hardware
 - Any decision about voice input anywhere — this session only proves the
-  vox_bridge-side adapter works against a local test server
+  voxport-side adapter works against a local test server
 
 Ask before adding anything not listed above.
