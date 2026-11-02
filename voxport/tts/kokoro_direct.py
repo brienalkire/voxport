@@ -10,6 +10,13 @@ becomes a real problem.
 
 import os
 
+# Kokoro and torch are optional dependencies (the `kokoro` extra), so a
+# missing one gets an install hint rather than a bare ModuleNotFoundError.
+_MISSING_EXTRA = (
+    "KokoroDirectTTS needs the optional Kokoro dependencies: "
+    "pip install 'voxport[kokoro]'"
+)
+
 # voxport/tts/kokoro_direct.py -> voxport/tts -> voxport -> repo root
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -39,7 +46,10 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 # Windows/conda with a WinError 127 on shm.dll — importing torch as the very
 # first thing this module does, regardless of what a caller does afterward,
 # is what makes that safe to rely on from any consumer.
-import torch  # noqa: F401
+try:
+    import torch  # noqa: F401
+except ImportError as exc:
+    raise ImportError(_MISSING_EXTRA) from exc
 
 from voxport.tts.base import TTSEngine
 
@@ -65,7 +75,10 @@ class KokoroDirectTTS(TTSEngine):
     def _build_pipeline(lang_code):
         # torch is already imported at module load time (see top of file);
         # Kokoro is safe to import lazily here, on first actual use.
-        from kokoro import KPipeline
+        try:
+            from kokoro import KPipeline
+        except ImportError as exc:
+            raise ImportError(_MISSING_EXTRA) from exc
 
         # Pass repo_id explicitly to suppress Kokoro's "defaulting repo_id"
         # warning.

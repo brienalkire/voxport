@@ -10,9 +10,16 @@ server rather than duplicating it.
 
 import asyncio
 
-from wyoming.asr import Transcribe, Transcript
-from wyoming.audio import AudioChunk, AudioStart, AudioStop
-from wyoming.client import AsyncTcpClient
+try:
+    from wyoming.asr import Transcribe, Transcript
+    from wyoming.audio import AudioChunk, AudioStart, AudioStop
+    from wyoming.client import AsyncTcpClient
+except ImportError as exc:
+    # wyoming is an optional dependency (the `wyoming` extra).
+    raise ImportError(
+        "WyomingWhisperSTT needs the optional Wyoming dependency: "
+        "pip install 'voxport[wyoming]'"
+    ) from exc
 
 from voxport.stt.base import STTEngine
 

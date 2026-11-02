@@ -4,6 +4,21 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Breaking:** adapter dependencies are now optional extras, so an
+  install only pulls in what it uses. The base install has just the
+  interfaces and numpy; `voxport[kokoro]` adds Kokoro and torch for
+  `KokoroDirectTTS`, `voxport[wyoming]` adds wyoming for
+  `WyomingWhisperSTT`, and `voxport[all]` adds both. Consumers must
+  reinstall with the extra they need (e.g.
+  `pip install -e "../voxport[all]"`).
+- **Breaking:** `soundfile` is no longer a dependency. voxport never used
+  it; consumers that write audio files must install it themselves.
+- Importing an adapter without its extra raises an `ImportError` naming
+  the extra to install, instead of a bare `ModuleNotFoundError`.
+
 ## [0.3.0] - 2026-10-31
 
 Renames the project from `vox_bridge` to `voxport`. No functional changes.

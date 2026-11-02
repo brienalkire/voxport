@@ -12,3 +12,7 @@ venv/
 
 # Stray run logs
 *.log
+
+# Build output
+build/
+dist/

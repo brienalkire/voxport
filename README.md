@@ -33,12 +33,26 @@ Requires Python 3.10+. Clone this repo as a sibling of the consumer repo,
 then install it in editable mode from the consumer's environment:
 
 ```
-pip install -e ../voxport
+pip install -e "../voxport[all]"
 ```
 
-Dependencies (Kokoro, torch, soundfile, numpy, wyoming) come from
-`pyproject.toml`. To pin a consumer to a tagged release instead of the
-working tree, check out that tag first (e.g. `git checkout v0.2.0`).
+The base install only includes the interfaces (and numpy). Each adapter's
+dependencies are an optional extra, so you install only what you use:
+
+| Extra | Adds | For |
+|---|---|---|
+| `kokoro` | Kokoro, torch (~2 GB) | `KokoroDirectTTS` |
+| `wyoming` | wyoming | `WyomingWhisperSTT` |
+| `all` | both of the above | everything |
+
+For example, `pip install -e "../voxport[wyoming]"` for speech-to-text
+only. Importing an adapter without its extra raises an `ImportError`
+naming the extra to install. To pin a consumer to a tagged release
+instead of the working tree, check out that tag first (e.g.
+`git checkout v0.2.0`).
+
+`soundfile` (used in the examples below to write WAV files) isn't a
+dependency of voxport; install it yourself if you need it.
 
 Not installed by this repo:
 - `WyomingWhisperSTT` needs a running Wyoming Whisper server — see
@@ -88,7 +102,7 @@ text = await asyncio.to_thread(stt.transcribe, audio_16k, "en")
 ## Consumers
 
 Each of these is its own repo, checked out as a sibling of this one, and
-depends on `voxport` via `pip install -e ../voxport`:
+depends on `voxport` via an editable install with the extras it needs:
 
 - **`podcast_generator`** — CLI and scheduled-task "drop folder" podcast
   script → audio conversion. The original app this toolkit's TTS side was
