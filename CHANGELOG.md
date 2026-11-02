@@ -18,6 +18,12 @@ All notable changes to this project are documented here. Format follows
   it; consumers that write audio files must install it themselves.
 - Importing an adapter without its extra raises an `ImportError` naming
   the extra to install, instead of a bare `ModuleNotFoundError`.
+- `KokoroDirectTTS` uses the repo-root `hf_cache/` folder as `HF_HOME`
+  only if that folder already exists; otherwise Hugging Face's standard
+  cache is used. Before, it always pointed `HF_HOME` next to the source
+  code, which for a regular (non-editable) install meant inside
+  `site-packages`. Existing checkouts that already have `hf_cache/` are
+  unaffected.
 
 ## [0.3.0] - 2026-10-31
 

@@ -154,13 +154,17 @@ voxport/
 
 ## Offline Hugging Face cache (only needed on a firewalled machine)
 
-`KokoroDirectTTS` always routes the Hugging Face cache to a repo-relative
-`hf_cache/` (`HF_HOME`), which is harmless and useful everywhere — it keeps
-a machine's downloaded weights bundled with the repo instead of scattered
-in the user-global cache. **Offline mode itself is opt-in, not forced**:
-`kokoro_direct.py` never sets `HF_HUB_OFFLINE` — on a machine with normal
-internet access, an uncached voice just downloads into `hf_cache/` on first
-use, same as vanilla Hugging Face behavior.
+By default, Kokoro's model weights and voice packs download to Hugging
+Face's standard cache (`~/.cache/huggingface`, or wherever `HF_HOME`
+points). When running from a source checkout, you can instead keep the
+cache inside the repo: create an `hf_cache/` folder at the repo root
+(it's gitignored) and `KokoroDirectTTS` will use it as `HF_HOME`, unless
+you've already set `HF_HOME` yourself. That keeps a machine's downloaded
+weights bundled with the checkout, so they can be copied to another one.
+**Offline mode itself is opt-in, not forced**: `kokoro_direct.py` never
+sets `HF_HUB_OFFLINE` — on a machine with normal internet access, an
+uncached voice just downloads on first use, same as vanilla Hugging Face
+behavior.
 
 If you're on a machine where huggingface.co is actually firewalled (this
 is why the fix exists — one of Brien's two machines, not necessarily this

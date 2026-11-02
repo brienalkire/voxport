@@ -20,12 +20,16 @@ _MISSING_EXTRA = (
 # voxport/tts/kokoro_direct.py -> voxport/tts -> voxport -> repo root
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Route the Hugging Face cache to a repo-relative directory rather than the
-# user-global default, so a machine's pre-populated cache travels with the
-# repo and downloads (where allowed) land somewhere predictable. Harmless
-# and useful on any machine, so it's always on. Set before any Kokoro-related
-# import.
-os.environ.setdefault("HF_HOME", os.path.join(REPO_ROOT, "hf_cache"))
+# In a source checkout, an existing `hf_cache/` folder at the repo root is
+# used as the Hugging Face cache (HF_HOME), so a pre-populated cache can be
+# copied between checkouts (e.g. onto a machine that can't reach
+# huggingface.co). Only if that folder already exists: a regular pip install
+# has no repo root (REPO_ROOT is site-packages), and there the standard
+# Hugging Face cache location is used. An HF_HOME already set by the user
+# always wins. Set before any Kokoro-related import.
+_REPO_HF_CACHE = os.path.join(REPO_ROOT, "hf_cache")
+if os.path.isdir(_REPO_HF_CACHE):
+    os.environ.setdefault("HF_HOME", _REPO_HF_CACHE)
 
 # Offline mode is opt-in, not forced here: only a machine that actually needs
 # it (e.g. one behind a firewall that blocks huggingface.co) should set
