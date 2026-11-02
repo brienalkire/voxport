@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voxport"
-version = "0.4.0"
+version = "0.5.0"
 description = "Text-to-speech and speech-to-text interfaces with swappable engine adapters (Kokoro, Wyoming Whisper)."
 readme = "README.md"
 license = "MIT"

@@ -4,10 +4,13 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-11-01
+
+`KokoroDirectTTS` progress messages move from `print()` to `logging`, so
+apps decide whether they appear.
 
 ### Changed
-- `KokoroDirectTTS` reports progress through `logging` (the
+- **Breaking (output):** `KokoroDirectTTS` reports progress through `logging` (the
   `voxport.tts.kokoro_direct` logger) instead of `print()`: model loads
   and each synthesis at INFO, per-segment progress at DEBUG. Python
   hides messages below WARNING by default, so these lines no longer
@@ -145,6 +148,7 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
+[0.5.0]: https://github.com/brienalkire/voxport/releases/tag/v0.5.0
 [0.4.0]: https://github.com/brienalkire/voxport/releases/tag/v0.4.0
 [0.3.0]: https://github.com/brienalkire/voxport/releases/tag/v0.3.0
 [0.2.0]: https://github.com/brienalkire/voxport/releases/tag/v0.2.0
