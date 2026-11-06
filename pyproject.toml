@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voxport"
-version = "0.5.0"
+version = "0.5.1"
 description = "Text-to-speech and speech-to-text interfaces with swappable engine adapters (Kokoro, Wyoming Whisper)."
 readme = "README.md"
 license = "MIT"
@@ -47,6 +47,12 @@ Issues = "https://github.com/brienalkire/voxport/issues"
 kokoro = [
     "kokoro>=0.9.4",
     "torch>=2.12.0",
+    # Kokoro's English phonemizer (misaki) downloads spaCy's en_core_web_sm
+    # on first use. spaCy installs it with this environment's pip if there
+    # is one; otherwise it falls back to a bare `uv pip install`, which can
+    # land in a different environment (uv-made environments have no pip),
+    # so the model is never found.
+    "pip",
 ]
 # WyomingWhisperSTT: lightweight network client, no local model.
 wyoming = [

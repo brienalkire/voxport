@@ -53,6 +53,8 @@ Things voxport doesn't install for you:
 - On first use, Kokoro downloads its model weights and voice packs from
   Hugging Face, and spaCy's `en_core_web_sm` English model. See
   [Offline use](#offline-use) for machines that can't reach those.
+  spaCy installs that model with pip, so `voxport[kokoro]` depends on
+  `pip`; this matters in environments made by uv, which don't include it.
 - `soundfile`, used in the examples below to write WAV files.
 
 ## Usage

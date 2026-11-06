@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.1] - 2026-11-05
+
+### Fixed
+- `KokoroDirectTTS`'s first synthesis in an environment without pip
+  (anything made by uv: `uv venv`, `uv add`, `uv tool install`) failed
+  with "Can't find model 'en_core_web_sm'". spaCy fell back to a bare
+  `uv pip install`, which installed the model into a different
+  environment. The `kokoro` extra now depends on `pip`, so spaCy installs
+  the model where it's needed.
+
 ## [0.5.0] - 2026-11-01
 
 `KokoroDirectTTS` progress messages move from `print()` to `logging`, so
@@ -148,6 +158,7 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
+[0.5.1]: https://github.com/brienalkire/voxport/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/brienalkire/voxport/releases/tag/v0.5.0
 [0.4.0]: https://github.com/brienalkire/voxport/releases/tag/v0.4.0
 [0.3.0]: https://github.com/brienalkire/voxport/releases/tag/v0.3.0
