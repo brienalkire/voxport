@@ -4,6 +4,22 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.2] - 2026-11-06
+
+### Changed
+- numpy 1.26 is accepted again (`numpy>=1.26`, was `>=2.0`), so voxport
+  installs into conda/miniforge base environments that still ship it
+  without upgrading numpy. Nothing in voxport needs numpy 2, and CI now
+  also tests on 1.26.
+
+### Added
+- README: Kokoro runs on the CPU with torch's default build (no GPU
+  needed), and a "Behind a corporate firewall or proxy" section: corporate
+  CA certificates (`SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE`), a blocked
+  Hugging Face Xet CDN (`HF_HUB_DISABLE_XET=1`), installing
+  `en_core_web_sm` from Hugging Face when GitHub is blocked, and adding
+  voxport to an existing environment with `--no-deps`.
+
 ## [0.5.1] - 2026-11-05
 
 ### Fixed
@@ -158,6 +174,7 @@ adapter, `KokoroDirectTTS`.
   package (at `kokoro_direct.py` import time) so no consumer needs to
   reproduce the workaround itself.
 
+[0.5.2]: https://github.com/brienalkire/voxport/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/brienalkire/voxport/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/brienalkire/voxport/releases/tag/v0.5.0
 [0.4.0]: https://github.com/brienalkire/voxport/releases/tag/v0.4.0

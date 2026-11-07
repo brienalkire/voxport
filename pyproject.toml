@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voxport"
-version = "0.5.1"
+version = "0.5.2"
 description = "Text-to-speech and speech-to-text interfaces with swappable engine adapters (Kokoro, Wyoming Whisper)."
 readme = "README.md"
 license = "MIT"
@@ -33,7 +33,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "numpy>=2.0",
+    # 1.26 too: conda/miniforge base environments often still ship it.
+    "numpy>=1.26",
 ]
 
 [project.urls]

@@ -42,7 +42,11 @@ pip install "voxport[all]"       # both
 | `wyoming` | wyoming | `WyomingWhisperSTT` |
 | `all` | both of the above | everything |
 
-A plain `pip install voxport` includes only the interfaces and numpy.
+Torch's default build runs Kokoro on the CPU, so `voxport[kokoro]` needs
+no GPU and no special torch install.
+
+A plain `pip install voxport` includes only the interfaces and numpy
+(1.26 or later).
 Importing an adapter without its extra raises an `ImportError` that
 names the extra to install.
 
@@ -165,6 +169,32 @@ clone, you can keep the cache inside it instead: create an `hf_cache/`
 folder at the repo root (it's gitignored) and `KokoroDirectTTS` uses it
 as `HF_HOME`, unless you've set `HF_HOME` yourself. That makes the
 cache easy to copy along with the checkout.
+
+### Behind a corporate firewall or proxy
+
+These are environment variables for the process that runs Kokoro; set
+them before the first download.
+
+- **`CERTIFICATE_VERIFY_FAILED`**: an SSL-inspecting proxy is replacing
+  certificates. Point Python at your company's CA certificate chain with
+  `SSL_CERT_FILE` and `REQUESTS_CA_BUNDLE` (both set to the same `.pem`
+  file), or `pip install pip-system-certs` to trust the operating
+  system's certificate store.
+- **`403` from an address like `us.aws.cdn.hf.co`**: the network blocks
+  Hugging Face's Xet CDN. `HF_HUB_DISABLE_XET=1` makes the download use
+  plain HTTP from huggingface.co instead.
+- **GitHub blocked, so `en_core_web_sm` can't download**: Hugging Face
+  hosts a copy. Download
+  `https://huggingface.co/spacy/en_core_web_sm/resolve/main/en_core_web_sm-any-py3-none-any.whl`
+  and `python -m pip install --no-deps` it. That copy is version 3.7.1,
+  built for spaCy 3.7, so spaCy 3.8 may warn about the version; it works
+  with Kokoro despite the warning.
+
+On a locked-down machine where a fresh install is a problem (endpoint
+security that checks every new file, say), you can add voxport to an
+environment that already has torch, kokoro, and spaCy, without pulling
+in anything else: `python -m pip install --no-deps voxport`, then
+`python -m pip check` to see whether anything is missing.
 
 ## Running a Wyoming Whisper server
 
